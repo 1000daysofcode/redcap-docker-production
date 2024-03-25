@@ -12,5 +12,3 @@ if [ ! -z "${SMTP_PORT}" ]; then
   sed -i "s/^port\s.*/port ${SMTP_PORT}/g" /etc/msmtprc
   echo "MSMTP host set to ${SMTP_PORT}"
 fi
-
-

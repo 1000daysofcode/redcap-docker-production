@@ -3,53 +3,40 @@
 ![Docker Compose][docker-compose-logo]
 ![REDCap][redcap-logo]
 
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-
 - [About](#about)
-- [Features](#features)
 - [Quick-Start](#quick-start)
 - [Full Documentation](#full-documentation)
-- [Updates](#updates)
-- [License](#license)
-- [Contributing](#contributing)
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+Original Documentation:
 
 [![documentation-button](rdc/documentation/button_documentation.png)](rdc/documentation/README.md)
 
-
 ## About
-This repo is designed to build a local development instance of REDCap on your laptop.  It also includes some aids
-to try and facilitate a rapid setup of REDCap using either your consortium credentials or a complete installer you
-receive from a teammate at your institution.
+This is a [fork](https://github.com/123andy/redcap-docker-compose) of a REDCap instance intended for local development. 
+There are three containers: one for the web application, one for cron jobs and another for the MySQL database. The original
+repository includes both Mailhog and PhpMyAdmin, but these have both been removed. In case these are needed for development 
+purposes, it is recommended to use the original Docker Compose environment.
 
-This is intended to be one of the fastest and easiest ways to create a local development instance of REDCap on your
-computer or test server.
-
-This is not intended to be used as a production server, although we do run something pretty similar here at Stanford.
-Should you want to run this as production, be sure to edit the `redcap.ini` file in the `override-web/php` folder
-to have production-ready php settings.
-
-## Features
- * Mailhog to capture outbound email for review
- * X-Debug support for detailed server-side inspection
- * PhpMyAdmin support for easy database maintenance / backups / restores
- * Easy to modify php-version or mysql-version and rebuild your environment in minutes
+The containers both use official images: the cron container uses Alpine, the web application container uses PHP's 
+Apache-buster (Debian), and the MySQL container is just the MySQL image. Additionally, SSL/TLS support has been added, 
+though certificate/ key files need to be linked to or added into the secrets folder. This should work with self-signed 
+certificates as well as true certificates. 
 
 ## Quick-Start
- * [Install Docker Desktop](https://docs.docker.com/get-docker) (requires docker account which is free)
- * [Download this repository](https://github.com/123andy/redcap-docker-compose/archive/master.zip) and unzip it to your computer
- * Open your download directory using a good IDE (
- [phpStorm](https://www.jetbrains.com/phpstorm/),
- [Visual Studio Code](https://code.visualstudio.com/),
- [Atom](https://atom.io/) - does not support xdebug, etc... )
- * Copy/Rename the `.env-example` to make a `.env` file - it is located in the `rdc` folder review the contents, making changes as necessary.
- * Once `.env` file settings are correct, from the `rdc` folder type `docker compose up -d`
- * Open your web browser and goto `http://localhost` (or, in some cases with macs `http://127.0.0.1`) and follow
-  directions for further installation
-
-:warning: **If you have a previous version of redcap-docker-compose make sure you change the `DOCKER_PREFIX` variable otherwise you may corrupt your existing installation.  Please see the full docs for more detail**
+ * [Install Docker Desktop](https://docs.docker.com/get-docker) 
+ * Download/ clone this repository and unzip it to your computer
+ * Copy/Rename `.env-example` to `.env` - it is located in the `rdc` folder (make changes as necessary).
+ * Save the (TLS)/SSL certificate and key to the secrets directory with the names `cert.pem` and `cert-key.pem` 
+ * See this [issue comment](https://github.com/123andy/redcap-docker-compose/issues/57#issuecomment-1041998401) from the 
+ original repository if you need to create a self-signed certificate.
+ * Upload the contents of a REDCap installation download to the `www` directory; keep `database.php` as is, but replace the rest
+ * Once `.env` file settings are set, from the `rdc` folder type `docker compose up -d` (ensure your `SERVER_NAME` is in `hosts`)
+ * Open your web browser and go to your host address; e.g. `http://localhost` (or, in some cases with macs `http://127.0.0.1`) 
+ * Assuming the page loads without error, connect to your database with MySQL Workbench as root and run the installation script as below:
+    * Generate the installation queries through REDCap's install.php pagecopy
+    * Copy the entirety to the existing script `install_14.sql` 
+    * Save the file and open in Workbench, then run all queries 
+ * From here, you can log in to a REDCap instance, add OIDC supoport and import projects and/or data dictionaries.
 
 ## Upgrading The Framework
 If you have an existing REDCap Docker Compose development setup and wish to swtich to the latest version, please review
@@ -58,28 +45,6 @@ the section in the [detailed documentation](rdc/documentation/README.md#how-do-i
 ## Full Documentation
 See the [detailed documentation](rdc/documentation/README.md) for more information!  Keep in mind this is a community
 effort so feedback is appreciated.  Please create issues here with any suggestions or make a pull request with improvements.
-
-## Updates
-* 2022-10-06  Did some cleanup to allow for M1 (ARM) support and Intel without changes
-* 2022-02-16  Made defaults php 8.1, mysql 8.0, xdebug 3.1.3 and incorporated some pull requests
-* 2020-12-28  Made defaults php7.4, xdebug 3.0, mysql 8
-* 2020-09-24  Minor documentation cleanup and testing for Windows
-* 2019-10-03  Improved documentation and cleanup of unused settings (issue #4)
-* 2019-09-06  Removed ssmtp and replaced with msmtp
-* 2019-06-06  Add X-Debug configuration.
-* 2019-01-24  Changed folder layout and optimized unzipping after upload to be much faster
-* 2018-08-19  Added .env file and added UID override for MAC users to maintain file ownership (see .env)
-* 2018-08-04  Added support for auto-install from `redcapx.y.z.zip`
-* 2018-08-01  Major refactoring into docker-compose 3
-
-## License
-Copyright (c) 2016 Andrew Martin
-Licensed under the MIT license.
-
-## Contributing
-Please make pull requests to extend the functionality and documentation
-
-I'd like to thank the many people who have contributed to making this repo better!
 
 [redcap-logo]: rdc/documentation/redcap-logo-large.png "REDCap"
 [docker-compose-logo]: rdc/documentation/docker-compose.png "Docker Compose"

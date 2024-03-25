@@ -17,6 +17,9 @@
 # RUN STARTUP SCRIPTS
 [ -d /etc/container-config/startup-scripts ] && for cmds in /etc/container-config/startup-scripts/*.sh ; do . ${cmds} ; done
 
+# REDCAP NEEDS THESE DIRECTORIES TO BE WRITABLE
+chmod +w /var/www/html/modules /var/www/html/temp
+
 # START APACHE
 mkdir -p /var/log/apache2
 exec /usr/sbin/apache2 -DFOREGROUND

@@ -1,62 +1,43 @@
 version: '3.7'
 services:
   web:
-    container_name: ${DOCKER_PREFIX}_web
+    container_name: redcap_prod_web
     build: ./docker-web
-    environment:
-      # For X-Debug to connect to your IDE, we need to resolve the IP of your laptop.  We use the host.docker.internal
-      # which will automatically resolve to the host on Docker containers.
-      XDEBUG_CONFIG: ${XDEBUG_CONFIG}
     env_file: .env
     restart: always
     depends_on:
       - db
     ports:
-      - 127.0.0.1:${WEB_PORT}:80
-#    extra_hosts:
-#      - "host.docker.internal:host-gateway"
+      - 80:80
+      - 443:443
     volumes:
-      - ${WEB_OVERRIDES}:/etc/container-config-override
-      - ${WEBROOT_DIR}:/var/www/html
-      - ${CREDENTIALS_DIR}:/var/credentials
-      - ${LOGS_DIR}:/var/log/apache2
+      - ./redcap-overrides/web:/etc/container-config-override
+      - ../credentials:/var/credentials
+      - ../logs:/var/log/apache2
+      - ../secrets:/var/secrets/
+      - ../www:/var/www/html
     logging:
       options:
         max-size: "10m"
         max-file: "3"
-    networks:
-      - redcap_network
-# You can prevent your REDCap from accessing certain sites (like twilio) using these settings
-# If you leave these commented out, you WILL be able to use Twilio from your docker
-#    extra_hosts:
-#      - "api.twilio.com:127.0.0.1"
-#      - "www.twilio.com:127.0.0.1"
-#      - "taskrouter.twilio.com:127.0.0.1"
-#      - "lookups.twilio.com:127.0.0.1"
-#      - "event-bridge.twilio.com:127.0.0.1"
 
   db:
-    container_name: ${DOCKER_PREFIX}_db
-    build: ./docker-mysql
-#    environment:
-#      user: ${APACHE_RUN_USER_ID}
+    container_name: redcap_prod_db
+    image: mysql:8.0
     env_file: ./.env
     restart: always
     cap_add:
       - SYS_NICE  # CAP_SYS_NICE
     volumes:
-      - ${MYSQL_DIR}:/var/lib/mysql
-      - ${LOGS_DIR}/mysql:/var/log
-#      - ${MYSQL_OVERRIDES}:/etc/mysql/mysql.conf.d
-      - ${MYSQL_OVERRIDES}:/etc/mysql/conf.d
-      - ${MYSQL_SCRIPTS}:/docker-entrypoint-initdb.d/
+      - ../logs/mysql:/var/log
+      - mysql-volume:/var/lib/mysql
+      - ./redcap-overrides/mysql/config:/etc/mysql/conf.d
+      - ./redcap-overrides/mysql/scripts:/docker-entrypoint-initdb.d/
     ports:
-     - 127.0.0.1:${MYSQL_PORT}:3306
-    networks:
-      - redcap_network
+      - 3306:3306
 
   cron:
-    container_name: ${DOCKER_PREFIX}_cron
+    container_name: redcap_prod_cron
     build: ./docker-cron
     restart: always
     env_file: .env
@@ -64,55 +45,10 @@ services:
       - web
       - db
     volumes:
-      - ${LOGS_DIR}:/logs-dir
-    networks:
-      - redcap_network
-
-  mailhog:
-    container_name: ${DOCKER_PREFIX}_mailhog
-    build: docker-mailhog
-    restart: always
-    env_file: .env
-    depends_on:
-      - web
-    ports:
-      - 127.0.0.1:${MAILHOG_PORT}:8025
-    volumes:
-      - ${MAILHOG_DIR}:/maildir
-    environment:
-      MH_STORAGE: maildir
-      MH_MAILDIR_PATH: /maildir
-      MH_OUTGOING_SMTP: /outgoing_smtp.json
-      MH_UI_WEB_PATH: mailhog
-    networks:
-      - redcap_network
-
-  # THIS CONTAINER IS OPTIONAL IF YOU WANT TO HAVE PHPMYADMIN - OTHERWISE COMMENT IT OUT
-  phpmyadmin:
-    container_name: ${DOCKER_PREFIX}_phpmyadmin
-#    image: phpmyadmin/phpmyadmin
-    image: arm64v8/phpmyadmin
-    env_file: .env
-    environment:
-      - UPLOAD_LIMIT=128M
-    depends_on:
-      - db
-    #restart: always
-#    volumes:
-#      - ${PHPMYADMIN_PHP_OVERRIDES}:/usr/local/etc/php/conf.d/uploads.ini
-    ports:
-      - 127.0.0.1:${PHPMYADMIN_PORT}:80
-    networks:
-      - redcap_network
+      - ../logs:/logs-dir
 
 volumes:
   mysql-volume:
-    name: "${DOCKER_PREFIX}_mysql-volume"
+    name: "rdc_prod_mysql-volume"
   logs-volume:
-    name: "${DOCKER_PREFIX}_logs-volume"
-  mailhog-volume:
-    name: "${DOCKER_PREFIX}_mailhog-volume"
-
-networks:
-  redcap_network:
-    name: "${DOCKER_PREFIX}_redcap_network"
+    name: "rdc_prod_logs-volume"
